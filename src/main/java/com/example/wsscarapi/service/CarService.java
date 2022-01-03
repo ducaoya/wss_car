@@ -3,11 +3,19 @@ package com.example.wsscarapi.service;
 import com.example.wsscarapi.dao.CarDao;
 import com.example.wsscarapi.entity.CarEntity;
 import com.example.wsscarapi.tool.Result;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import java.sql.Date;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class CarService {
@@ -17,13 +25,12 @@ public class CarService {
 //    分页查询二手车列表
     public Result getCarList(int page, int size){
         Result result = new Result(200,"ok","");
-        List<CarEntity> list = carDao.findAll();
-        int total = list.size();
-        list = list.subList((page-1)*size,page*size);
+        Pageable request = PageRequest.of(page,size);
+        Page<CarEntity> list = carDao.findAll(request);
 
         Map data = new HashMap();
-        data.put("list",list);
-        data.put("total",total);
+        data.put("list",list.getContent());
+        data.put("total",list.getTotalElements());
         result.setData(data);
 
         return  result;
@@ -32,47 +39,46 @@ public class CarService {
 //    搜索
     public Result search(int page, int size,String title,int min_price,int max_price,int car_age){
         Result result = new Result(200,"ok","");
-        List<CarEntity> list;
-        if(title != null && title != ""){
-            list = carDao.findAllByTitleLike("%"+title+"%");
-        }else {
-            list = carDao.findAll();
-        }
+        Page<CarEntity> list;
+        Pageable request = PageRequest.of(page,size);
 
-        if(min_price != -1 && max_price != -1){
-            list=list.stream()
-                    .filter((CarEntity car)->car.getPrice()>=min_price && car.getPrice()<=max_price)
-                    .collect(Collectors.toList());
-        }
+        Specification<CarEntity> specification = new Specification<CarEntity>() {
+            @Override
+            public Predicate toPredicate(Root root, CriteriaQuery query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> list = new ArrayList<>();
+                if(title != null && !title.equals("")){
+                    Predicate predicateByTitle = criteriaBuilder.like(root.get("title"),'%'+title+'%');
+                    list.add(predicateByTitle);
+                }
 
-        Calendar calendar = Calendar.getInstance();
-        int nowYear = calendar.get(Calendar.YEAR);
-        if(car_age !=-1){
-            list=list.stream()
-                    .filter((CarEntity car)->{
-                        calendar.setTime(car.getFirstRegistered());
-                        int year = calendar.get(Calendar.YEAR);
-                        return nowYear-year<=car_age;
-                    })
-                    .collect(Collectors.toList());
-        }
+                if(min_price != -1 && max_price != -1){
+                    Predicate predicateByPrice = criteriaBuilder.between(root.get("price"),min_price,max_price);
+                    list.add(predicateByPrice);
+                }
 
-        int total = list.size();
+                if(car_age != -1){
+                    Calendar calendar = Calendar.getInstance();
+                    Date nowDate = new Date(calendar.getTimeInMillis());
+                    int y = calendar.get(Calendar.YEAR)-car_age;
+                    int m = calendar.get(Calendar.MONTH);
+                    int d = calendar.get(Calendar.DATE);
+                    calendar.set(y,m,d);
+                    Date date = new Date(calendar.getTimeInMillis());
+                    Predicate predicateByAge = criteriaBuilder.between(root.get("firstRegistered"),date,nowDate);
+                    list.add(predicateByAge);
+                }
 
-        if(total<(page-1)*size){
-            result.setStatus("error");
-            result.setMessage("页面和页面尺寸过大");
-        }else {
-            if(total<page*size){
-                list = list.subList((page-1)*size,total);
-            }else {
-                list = list.subList((page-1)*size,page*size);
+                Predicate[] predicates = new Predicate[list.size()];
+                return criteriaBuilder.and(list.toArray(predicates));
             }
-            Map data = new HashMap();
-            data.put("list",list);
-            data.put("total",total);
-            result.setData(data);
-        }
+        };
+
+        list = carDao.findAll(specification,request);
+
+        Map data = new HashMap();
+        data.put("list",list.getContent());
+        data.put("total",list.getTotalElements());
+        result.setData(data);
 
         return  result;
     }

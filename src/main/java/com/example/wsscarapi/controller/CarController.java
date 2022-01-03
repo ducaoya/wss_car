@@ -37,18 +37,10 @@ public class CarController {
         int page=json.getInteger("page");
         int size=json.getInteger("size");
         String title = json.getString("title");
-        int min_price = -1;
-        int max_price = -1;
-        int car_age = -1;
 
-        if(json.getInteger("min_price") != null && json.getInteger("max_price") != null){
-            min_price = json.getInteger("min_price");
-            max_price = json.getInteger("max_price");
-        }
-
-        if(json.getInteger("car_age") != null){
-            car_age=json.getInteger("car_age");
-        }
+        int min_price = json.getInteger("min_price");
+        int max_price = json.getInteger("max_price");
+        int car_age = json.getInteger("car_age");
 
         return carService.search(page,size,title,min_price,max_price,car_age);
     }

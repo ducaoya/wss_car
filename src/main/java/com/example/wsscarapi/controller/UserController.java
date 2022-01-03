@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:8080", "http:127.0.0.1:8080"},allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:8080", "http://127.0.0.1:8080"},allowCredentials = "true")
 @RequestMapping("/api/user")
 public class UserController {
     @Resource
