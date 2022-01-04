@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:8080",allowCredentials = "true")
-@RequestMapping("/api/delivery")
+@CrossOrigin(origins = {"http://localhost:8080", "http://127.0.0.1:8080", "https://wusansi.doromolll.xyz", "http://wusansi.doromolll.xyz"},allowCredentials = "true")
+@RequestMapping("/delivery")
 public class DeliveryController {
     @Resource
     private DeliveryService deliveryService;

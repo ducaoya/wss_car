@@ -4,16 +4,18 @@ import com.alibaba.fastjson.JSONObject;
 import com.example.wsscarapi.entity.UserEntity;
 import com.example.wsscarapi.service.UserService;
 import com.example.wsscarapi.tool.Result;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import java.time.Duration;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:8080", "http://127.0.0.1:8080"},allowCredentials = "true")
-@RequestMapping("/api/user")
+@CrossOrigin(origins = {"http://localhost:8080", "http://127.0.0.1:8080", "https://wusansi.doromolll.xyz", "http://wusansi.doromolll.xyz"},allowCredentials = "true")
+@RequestMapping("/user")
 public class UserController {
     @Resource
     private UserService userService;
@@ -55,17 +57,31 @@ public class UserController {
 
         Result result = userService.login(username,password);
         if(result.getStatus().equals("ok")){
-            Cookie cookie = new Cookie("token",result.getData().get("token").toString());
-            cookie.setHttpOnly(true);
-            cookie.setMaxAge( 24 * 60 * 60);
-//            cookie.setDomain("localhost:8080");
 
-            response.addCookie(cookie);
+            ResponseCookie cookies = ResponseCookie.from("token", result.getData().get("token").toString()) // key & value
+                    .httpOnly(true)		// 禁止js读取
+                    .secure(false)		// 在http下也传输
+                    .domain("doromolll.xyz")// 域名
+                    .path("/")
+                    .maxAge(Duration.ofHours(24))	// 24个小时候过期
+//                    .sameSite("none")	// 大多数情况也是不发送第三方 Cookie，但是导航到目标网址的 Get 请求除外
+                    .build()
+                    ;
+
+            // 设置Cookie Header
+            response.setHeader(HttpHeaders.SET_COOKIE, cookies.toString());
+
             Map data = result.getData();
             data.remove("token");
             result.setData(data);
         }
 
         return result;
+    }
+
+    @GetMapping("/test")
+    @ResponseBody
+    public String test(){
+        return "test api";
     }
 }

@@ -13,8 +13,8 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:8080",allowCredentials = "true")
-@RequestMapping("/api/order")
+@CrossOrigin(origins = {"http://localhost:8080", "http://127.0.0.1:8080", "https://wusansi.doromolll.xyz", "http://wusansi.doromolll.xyz"},allowCredentials = "true")
+@RequestMapping("/order")
 public class OderController {
     @Resource
     private OrderService orderService;

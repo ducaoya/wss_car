@@ -16,8 +16,8 @@ import java.text.SimpleDateFormat;
 
 
 @Controller
-@CrossOrigin(origins = "http://localhost:8080",allowCredentials = "true")
-@RequestMapping("/api/car")
+@CrossOrigin(origins = {"http://localhost:8080", "http://127.0.0.1:8080", "https://wusansi.doromolll.xyz", "http://wusansi.doromolll.xyz"},allowCredentials = "true")
+@RequestMapping("/car")
 public class CarController {
     @Resource
     private CarService carService;
